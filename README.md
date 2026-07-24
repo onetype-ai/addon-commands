@@ -47,7 +47,7 @@ Fields, in canon order: `id` (addon then action with colons, like `vault:set`), 
 5. **Output validation.** On a 2xx resolve with an `out` schema, the data is sealed against it. Data that violates the contract raises a `500` `OUT error`. The run rejects loudly, nothing is silently dropped.
 6. **Emit.** Every run, success or failure, fires the `commands.run` emitter with `{ id, input, data, message, code, time, context, direct }`.
 
-The resolve signature is `resolve(data, message, code, end)`. Every result is an envelope: `{ data, message, code, time, end }`, with `time` in milliseconds as a string.
+The resolve signature is `resolve(data, message, code, end)`. Every result is an envelope: `{ data, message, code, time, end }`, with `time` in milliseconds as a string. A run settles once: after the first ending resolve, every later resolve and chunk is inert, and the emitter fires exactly once. Output shaping lives in `item.shape`, the lifecycle calls it for every 2xx resolve.
 
 Back `item.run` signature: `Fn('run', properties, context, options)` where `options` is `{ direct, onChunk }`. Front is the same minus `direct`. `direct: true` marks a trusted internal call and skips the condition.
 
@@ -75,7 +75,7 @@ A callback may resolve many times: `resolve(chunk, message, 200, false)` emits a
 
 ## Front directive
 
-`<ot-command command="posts:many" bind="posts">` (`front/items/directives/664.ot.command.js`) runs a command on render and binds `{ response, error, loading }` to the compile data under `bind`. Attributes: `command` (required), `bind` (default `command`), `data`, `api` (boolean, routes through `commands.run.api`), `_success`/`_error` callbacks.
+`<ot-command command="posts:many" bind="posts">` (`front/items/directives/ot.command.js`) runs a command on render and binds `{ response, error, loading }` to the compile data under `bind`. A bind key that already holds a value skips the run. Every non 2xx envelope lands in `error` and calls `_error`; only a 2xx calls `_success`. Attributes: `command` (required), `bind` (default `command`), `data`, `api` (boolean, routes through `commands.run.api`), `_success`/`_error` callbacks.
 
 ## Guarantees
 
