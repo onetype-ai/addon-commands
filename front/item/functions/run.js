@@ -5,13 +5,12 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
     const { onChunk = null } = options;
     const startTime = performance.now();
 
-    this.envelope = (data, message, code, end) => ({
-        data,
-        message,
-        code,
-        time: (performance.now() - startTime).toFixed(2),
-        end
-    });
+    this.envelope = (data, message, code, end) =>
+    {
+        const time = (performance.now() - startTime).toFixed(2);
+
+        return { data, message, code, time, end };
+    };
 
     this.emit = (result) =>
     {

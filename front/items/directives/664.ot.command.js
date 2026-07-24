@@ -7,7 +7,6 @@ onetype.AddonReady('directives', function(directives)
         icon: 'terminal',
         name: 'Command',
         description: 'Execute a command instantly on render',
-        category: 'data',
         trigger: 'node',
         order: 664,
         strict: false,
@@ -42,7 +41,7 @@ onetype.AddonReady('directives', function(directives)
                 description: 'Runs the command on the server through run.api when true.'
             }
         },
-        code: function(data, item, compile, node)
+        code: function(data, compile, node)
         {
             if(node.tagName.toLowerCase() !== 'ot-command')
             {
