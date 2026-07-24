@@ -65,6 +65,17 @@ onetype.AddonReady('directives', function(directives)
                         ? await commands.run.api(config.command, config.data)
                         : await commands.run(config.command, config.data);
 
+                    if(result.code < 200 || result.code >= 300)
+                    {
+                        state.response = result;
+                        state.error    = result.message;
+                        state.loading  = false;
+
+                        config.onError && config.onError(state);
+
+                        return;
+                    }
+
                     state.response = result;
                     state.error    = null;
                     state.loading  = false;
