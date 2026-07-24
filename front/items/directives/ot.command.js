@@ -105,15 +105,15 @@ onetype.AddonReady('directives', function(directives)
                 }
             };
 
-            const config = this.config();
+            const bind = data['bind'].value;
 
-            if(compile.data[config.bind] !== undefined)
+            if(compile.data[bind] !== undefined)
             {
                 return;
             }
 
-            compile.data[config.bind] = null;
-            this.run(config);
+            compile.data[bind] = null;
+            this.run(this.config());
         }
     });
 });
