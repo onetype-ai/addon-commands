@@ -11,12 +11,12 @@ onetype.AddonReady('directives', function(directives)
         strict: true,
         tag: 'ot-command',
         attributes: {
-            'command': ['string', null, true],
-            'bind': ['string', 'command'],
-            '_success': ['function'],
-            '_error': ['function'],
-            'data': ['object', {}],
-            'api': ['boolean', false]
+            'command': { type: 'string', required: true },
+            'bind': { type: 'string', value: 'command' },
+            '_success': { type: 'function' },
+            '_error': { type: 'function' },
+            'data': { type: 'object', value: {} },
+            'api': { type: 'boolean', value: false }
         },
         code: function(data, item, compile, node)
         {
