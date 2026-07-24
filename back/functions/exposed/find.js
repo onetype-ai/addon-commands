@@ -7,22 +7,12 @@ commands.FnExpose('find', function(method, pathname)
         return items.find((item) => item.Get('endpoint') === target);
     };
 
-    this.same = (segment, part) =>
-    {
-        if(segment.startsWith(':'))
-        {
-            return true;
-        }
-
-        return segment === part;
-    };
-
     this.matches = (endpoint, parts) =>
     {
         const segments = endpoint.split('/');
 
         return segments.length === parts.length
-            && segments.every((segment, index) => this.same(segment, parts[index]));
+            && segments.every((segment, index) => segment.startsWith(':') || segment === parts[index]);
     };
 
     this.params = (items, target) =>
@@ -34,19 +24,8 @@ commands.FnExpose('find', function(method, pathname)
 
     const target = pathname.toLowerCase();
     const items = Object.values(this.Items()).filter((item) => item.Get('method') === method);
-    const exact = this.exact(items, target);
 
-    if(exact)
-    {
-        return exact;
-    }
-
-    const parameterized = this.params(items, target);
-
-    if(parameterized)
-    {
-        return parameterized;
-    }
-
-    return Object.values(this.Items()).find((item) => item.Get('endpoint') === '/*');
+    return this.exact(items, target)
+        || this.params(items, target)
+        || Object.values(this.Items()).find((item) => item.Get('endpoint') === '/*');
 });
