@@ -47,27 +47,29 @@ onetype.AddonReady('directives', function(directives)
                 return;
             }
 
+            this.config = () =>
+            {
+                return {
+                    command: data['command'].value,
+                    bind: data['bind'].value,
+                    data: data['data'].value,
+                    api: data['api'].value,
+                    onSuccess: data['_success'].value,
+                    onError: data['_error'].value
+                };
+            };
+
+            const config = this.config();
+
             this.init = () =>
             {
-                this.config();
-
-                if(compile.data[this.bind] !== undefined)
+                if(compile.data[config.bind] !== undefined)
                 {
                     return;
                 }
 
-                compile.data[this.bind] = null;
+                compile.data[config.bind] = null;
                 this.run();
-            };
-
-            this.config = () =>
-            {
-                this.command = data['command'].value;
-                this.bind = data['bind'].value;
-                this.data = data['data'].value;
-                this.api = data['api'].value;
-                this.onSuccess = data['_success'].value;
-                this.onError = data['_error'].value;
             };
 
             this.run = async () =>
@@ -80,9 +82,9 @@ onetype.AddonReady('directives', function(directives)
 
                 try
                 {
-                    const result = this.api
-                        ? await commands.run.api(this.command, this.data)
-                        : await commands.run(this.command, this.data);
+                    const result = config.api
+                        ? await commands.run.api(config.command, config.data)
+                        : await commands.run(config.command, config.data);
 
                     if(result.code < 200 || result.code >= 300)
                     {
@@ -90,7 +92,7 @@ onetype.AddonReady('directives', function(directives)
                         state.error    = result.message;
                         state.loading  = false;
 
-                        this.onError && this.onError(state);
+                        config.onError && config.onError(state);
 
                         return;
                     }
@@ -99,7 +101,7 @@ onetype.AddonReady('directives', function(directives)
                     state.error    = null;
                     state.loading  = false;
 
-                    this.onSuccess && this.onSuccess(state);
+                    config.onSuccess && config.onSuccess(state);
                 }
                 catch(error)
                 {
@@ -107,11 +109,11 @@ onetype.AddonReady('directives', function(directives)
                     state.error    = error.message;
                     state.loading  = false;
 
-                    this.onError && this.onError(state);
+                    config.onError && config.onError(state);
                 }
                 finally
                 {
-                    compile.data[this.bind] = state;
+                    compile.data[config.bind] = state;
                     compile.data.Update();
                 }
             };
