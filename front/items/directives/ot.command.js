@@ -59,8 +59,6 @@ onetype.AddonReady('directives', function(directives)
                 };
             };
 
-            const config = this.config();
-
             this.run = async () =>
             {
                 const state = {
@@ -106,6 +104,8 @@ onetype.AddonReady('directives', function(directives)
                     compile.data.Update();
                 }
             };
+
+            const config = this.config();
 
             if(compile.data[config.bind] !== undefined)
             {
