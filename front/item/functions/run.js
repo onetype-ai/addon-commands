@@ -137,8 +137,7 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
         }
         catch(error)
         {
-            const reason = error.message
-                || String(error);
+            const reason = error.message ? error.message : String(error);
 
             this.emit(this.envelope(null, reason, 500, true));
             reject(error);
