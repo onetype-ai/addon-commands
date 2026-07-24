@@ -31,6 +31,16 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
     {
         let settled = false;
 
+        this.reason = (error) =>
+        {
+            if(error.message)
+            {
+                return error.message;
+            }
+
+            return String(error);
+        };
+
         this.finish = (message, code, data = null) =>
         {
             const result = this.envelope(data, message, code, true);
@@ -141,7 +151,7 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
         }
         catch(error)
         {
-            this.emit(this.envelope(null, error.message || String(error), typeof error.code === 'number' ? error.code : 500, true));
+            this.emit(this.envelope(null, this.reason(error), typeof error.code === 'number' ? error.code : 500, true));
             reject(error);
         }
     });
