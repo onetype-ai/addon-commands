@@ -137,7 +137,10 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
         }
         catch(error)
         {
-            this.emit(this.envelope(null, error.message || String(error), 500, true));
+            const reason = error.message
+                || String(error);
+
+            this.emit(this.envelope(null, reason, 500, true));
             reject(error);
         }
     });

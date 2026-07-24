@@ -12,14 +12,16 @@ commands.FnExpose('find', function(method, pathname)
         const segments = endpoint.split('/');
 
         return segments.length === parts.length
-            && segments.every((segment, index) => segment.startsWith(':') || segment === parts[index]);
+            && segments.every((segment, index) => segment.startsWith(':')
+                || segment === parts[index]);
     };
 
     this.params = (items, target) =>
     {
         const parts = target.split('/');
 
-        return items.find((item) => (item.Get('endpoint') + '').includes(':') && this.matches(item.Get('endpoint'), parts));
+        return items.find((item) => (item.Get('endpoint') + '').includes(':')
+            && this.matches(item.Get('endpoint'), parts));
     };
 
     const target = pathname.toLowerCase();
