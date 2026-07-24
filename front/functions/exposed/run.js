@@ -1,3 +1,5 @@
+// This file is part of OneType. Created and led by Dejan Tomic <hi@iamdejan.com>, onetype.ai
+
 commands.FnExpose('run', async function(id, data = {})
 {
     const command = commands.ItemGet(id);

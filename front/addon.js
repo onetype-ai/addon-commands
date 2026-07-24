@@ -1,3 +1,5 @@
+// This file is part of OneType. Created and led by Dejan Tomic <hi@iamdejan.com>, onetype.ai
+
 const commands = onetype.Addon('commands', (addon) =>
 {
     addon.Field('id', {

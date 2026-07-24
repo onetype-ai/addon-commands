@@ -1,3 +1,5 @@
+// This file is part of OneType. Created and led by Dejan Tomic <hi@iamdejan.com>, onetype.ai
+
 import commands from '#commands/back/addon.js';
 
 commands.Fn('item.shape', function(item, data)

@@ -1,3 +1,5 @@
+// This file is part of OneType. Created and led by Dejan Tomic <hi@iamdejan.com>, onetype.ai
+
 onetype.emitters.ItemAdd({
     id: 'commands.run',
     addon: 'commands',
