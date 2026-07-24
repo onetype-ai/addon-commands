@@ -153,9 +153,7 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
         }
         catch(error)
         {
-            const reason = error.message ? error.message : String(error);
-
-            this.emit(this.envelope(null, reason, typeof error.code === 'number' ? error.code : 500, true));
+            this.emit(this.envelope(null, error.message ? error.message : String(error), typeof error.code === 'number' ? error.code : 500, true));
             reject(error);
         }
     });
