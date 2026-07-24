@@ -8,6 +8,7 @@
     "status": "enabled",
     "depends": [],
     "supports": [
-        "onetype/addon/canon"
+        "onetype/addon/canon",
+        "onetype/addon/directives"
     ]
 }

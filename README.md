@@ -3,7 +3,7 @@
 Commands is the OneType addon that turns a named callback into a typed, documented, runnable action. A command has an id, an input schema, an output schema and a callback. Everything else (HTTP exposure, gRPC streaming, telemetry, permission guards) hangs off that one registration. The addon has zero dependencies; transports depend on it, never the other way around.
 
 - Package: `@onetype/addon-commands`, slug `onetype/addon/commands`
-- Depends on: nothing. Supports: `onetype/addon/canon` (ships canon pattern and placement items that activate when canon is present)
+- Depends on: nothing. Supports: `onetype/addon/canon` (pattern and placement items that activate when canon is present) and `onetype/addon/directives` (the `ot-command` directive registers when directives are present)
 - Sides: `back/` (Node) and `front/` (browser, shipped as an asset bundle registered in `back/items/onetype/assets/commands.js`)
 
 ## Registering a command
