@@ -59,7 +59,7 @@ onetype.AddonReady('directives', function(directives)
                 };
             };
 
-            this.run = async () =>
+            this.run = async (config) =>
             {
                 const state = {
                     response: null,
@@ -113,7 +113,7 @@ onetype.AddonReady('directives', function(directives)
             }
 
             compile.data[config.bind] = null;
-            this.run();
+            this.run(config);
         }
     });
 });
