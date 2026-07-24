@@ -1,0 +1,13 @@
+{
+    "name": "@onetype/addon-commands",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "./back/load.js",
+    "imports": {
+        "#commands/*": "./*"
+    },
+    "exports": {
+        ".": "./back/load.js",
+        "./*": "./*"
+    }
+}
