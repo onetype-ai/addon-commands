@@ -70,21 +70,6 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
             return true;
         };
 
-        const shape = (data) =>
-        {
-            try
-            {
-                return onetype.DataDefine(data, onetype.DataConfig(item.Get('out')), true);
-            }
-            catch(error)
-            {
-                throw onetype.Error(500, 'Command :command: OUT error: :reason:', {
-                    command: item.Get('id'),
-                    reason: error.message
-                });
-            }
-        };
-
         let settled = false;
 
         const callback = (data, message = "Command '{{command}}' executed successfully.", code = 200, end = true) =>
@@ -101,7 +86,7 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
 
             if(code >= 200 && code < 300 && item.Get('out'))
             {
-                data = shape(data);
+                data = item.Fn('shape', data);
             }
 
             const result = {

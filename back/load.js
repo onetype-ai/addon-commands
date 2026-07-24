@@ -4,6 +4,7 @@ import '#commands/back/items/onetype/schemas/command.js';
 import '#commands/back/items/onetype/emitters/commands.run.js';
 import '#commands/back/items/onetype/middlewares/commands.run.js';
 
+import '#commands/back/item/functions/shape.js';
 import '#commands/back/item/functions/run.js';
 
 import '#commands/back/functions/exposed/run.js';
