@@ -101,12 +101,17 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
                 message = 'The requested resource cannot be found.';
             }
 
+            if(message === null || message === undefined)
+            {
+                message = '';
+            }
+
             if(code >= 200 && code < 300 && item.Get('out'))
             {
                 data = item.Fn('shape', data);
             }
 
-            this.deliver(this.envelope(data, message?.replace('{{command}}', item.Get('id')), code, end));
+            this.deliver(this.envelope(data, message.replace('{{command}}', item.Get('id')), code, end));
         };
 
         this.execute = async () =>
