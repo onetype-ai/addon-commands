@@ -77,33 +77,6 @@ A callback may resolve many times: `resolve(chunk, message, 200, false)` emits a
 
 `<ot-command command="posts:many" bind="posts">` (`front/items/directives/664.ot.command.js`) runs a command on render and binds `{ response, error, loading }` to the compile data under `bind`. Attributes: `command` (required), `bind` (default `command`), `data`, `api` (boolean, routes through `commands.run.api`), `_success`/`_error` callbacks.
 
-## Transports live elsewhere
-
-Commands knows nothing about servers or clients. The bridges live with the transport that owns them:
-
-- `servers.http` ships `run.http` (`addon-servers/back/addons/http/functions/run.http.js`), an HTTP server whose request handler resolves commands via `commands.find`, binds `:param` path segments into the input, honors `streaming`, and answers with the envelope.
-- `servers.grpc` ships `run.grpc`, a gRPC server that answers `commands:get:many` introspection and streams command runs.
-- `clients.grpc` ships `make.client`, which connects to a remote instance, mirrors its exposed commands locally under a `remote:` prefix, forwards runs over the stream, and re-registers on reconnect. Recursion is refused: a mirrored command cannot invoke another remote command.
-
-## File layout
-
-```
-back/
-    addon.js                 field definitions (the command item shape)
-    load.js                  import order for the back side
-    item/functions/run.js    the run lifecycle (item.run)
-    functions/exposed/       run.js, find.js
-    items/commands/          run.js, get.one.js, get.many.js
-    items/onetype/           schemas/, emitters/, middlewares/, assets/
-    items/canon/             patterns/items.js, placements/items.js (active when canon is present)
-front/
-    addon.js                 same field definitions for the browser registry
-    item/functions/run.js    the run lifecycle minus direct/middleware context
-    functions/exposed/       run.js, run.api.js
-    items/onetype/           schemas/, emitters/, middlewares/
-    items/directives/        664.ot.command.js
-```
-
 ## Guarantees
 
 - No silent failures: unknown function names throw, out-of-contract data raises `OUT error`, unknown input keys resolve `400`.
