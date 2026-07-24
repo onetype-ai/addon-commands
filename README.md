@@ -157,12 +157,12 @@ Use `run.api` when the command only exists on the back or must run with server a
 In markup, the `ot-command` directive runs a command on render and binds its state:
 
 ```html
-<ot-command command="posts:many" bind="posts" :data="{ page: 1 }" api="true"></ot-command>
+<ot-command use="posts:many" bind="posts" :data="{ page: 1 }" api="true"></ot-command>
 <div ot-if="posts.loading">Loading...</div>
 <div ot-for="post in posts.response.data"></div>
 ```
 
-The bound state is `{ response, error, loading }`. A bind key that already holds a value skips the run. Every non 2xx envelope lands in `error` and calls `_error`; only a 2xx calls `_success`. Attributes: `command` (required), `bind` (defaults to `command`), `data`, `api`, `_success`, `_error`.
+The bound state is `{ response, error, loading }`. A bind key that already holds a value skips the run. Every non 2xx envelope lands in `error` and calls `_error`; only a 2xx calls `_success`. Attributes: `use` (required, the command id), `bind` (defaults to `command`), `data`, `api`, `_success`, `_error`.
 
 ## Compose commands
 

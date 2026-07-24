@@ -11,7 +11,7 @@ onetype.AddonReady('directives', function(directives)
         strict: false,
         tag: 'ot-command',
         attributes: {
-            'command': {
+            'use': {
                 type: 'string',
                 required: true,
                 description: 'Id of the command to run on render.'
@@ -50,7 +50,7 @@ onetype.AddonReady('directives', function(directives)
             this.config = () =>
             {
                 return {
-                    command: data['command'].value,
+                    command: data['use'].value,
                     bind: data['bind'].value,
                     data: data['data'].value,
                     api: data['api'].value,
