@@ -1,0 +1,13 @@
+{
+    "type": "addon",
+    "slug": "onetype/addon/commands",
+    "name": "Commands",
+    "description": "Registry of runnable commands with typed input/output schemas, exposed over HTTP and gRPC and resolved by the run operation.",
+    "icon": "terminal",
+    "color": "rgba(129, 140, 248, 1)",
+    "status": "enabled",
+    "depends": [],
+    "supports": [
+        "onetype/addon/canon"
+    ]
+}
