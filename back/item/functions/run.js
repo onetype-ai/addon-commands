@@ -89,6 +89,21 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
             }
         };
 
+        this.wording = (message, code) =>
+        {
+            if(message === null && code === 404)
+            {
+                return 'The requested resource cannot be found.';
+            }
+
+            if(message === null || message === undefined)
+            {
+                return '';
+            }
+
+            return message.replace('{{command}}', item.Get('id'));
+        };
+
         this.callback = (data, message = "Command '{{command}}' executed successfully.", code = 200, end = true) =>
         {
             if(settled)
@@ -96,22 +111,12 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
                 return;
             }
 
-            if(message === null && code === 404)
-            {
-                message = 'The requested resource cannot be found.';
-            }
-
-            if(message === null || message === undefined)
-            {
-                message = '';
-            }
-
             if(code >= 200 && code < 300 && item.Get('out'))
             {
                 data = item.Fn('shape', data);
             }
 
-            this.deliver(this.envelope(data, message.replace('{{command}}', item.Get('id')), code, end));
+            this.deliver(this.envelope(data, this.wording(message, code), code, end));
         };
 
         this.execute = async () =>
