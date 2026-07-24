@@ -11,12 +11,34 @@ onetype.AddonReady('directives', function(directives)
         strict: true,
         tag: 'ot-command',
         attributes: {
-            'command': { type: 'string', required: true },
-            'bind': { type: 'string', value: 'command' },
-            '_success': { type: 'function' },
-            '_error': { type: 'function' },
-            'data': { type: 'object', value: {} },
-            'api': { type: 'boolean', value: false }
+            'command': {
+                type: 'string',
+                required: true,
+                description: 'Id of the command to run on render.'
+            },
+            'bind': {
+                type: 'string',
+                value: 'command',
+                description: 'Key the run state binds to on the compile data.'
+            },
+            '_success': {
+                type: 'function',
+                description: 'Called with the state when the run resolves 2xx.'
+            },
+            '_error': {
+                type: 'function',
+                description: 'Called with the state when the run fails or resolves outside 2xx.'
+            },
+            'data': {
+                type: 'json',
+                value: {},
+                description: 'Properties passed to the command.'
+            },
+            'api': {
+                type: 'boolean',
+                value: false,
+                description: 'Runs the command on the server through run.api when true.'
+            }
         },
         code: function(data, item, compile, node)
         {
