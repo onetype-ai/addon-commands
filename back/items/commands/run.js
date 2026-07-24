@@ -37,20 +37,20 @@ onetype.AddonReady('commands', (commands) =>
         },
         callback: async function(properties, resolve)
         {
-            const command = commands.ItemGet(properties.id);
-
-            if(!command)
+            const forward = async () =>
             {
-                return resolve(null, 'Command does not exist.', 404);
-            }
+                const command = commands.ItemGet(properties.id);
 
-            if(!command.Get('exposed'))
-            {
-                return resolve(null, 'Command is not exposed.', 403);
-            }
+                if(!command)
+                {
+                    return resolve(null, 'Command does not exist.', 404);
+                }
 
-            try
-            {
+                if(!command.Get('exposed'))
+                {
+                    return resolve(null, 'Command is not exposed.', 403);
+                }
+
                 const result = await command.Fn('run', properties.data, this);
 
                 resolve({
@@ -58,6 +58,11 @@ onetype.AddonReady('commands', (commands) =>
                     message: result.message,
                     code: result.code
                 });
+            };
+
+            try
+            {
+                await forward();
             }
             catch(error)
             {

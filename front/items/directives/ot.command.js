@@ -59,6 +59,45 @@ onetype.AddonReady('directives', function(directives)
                 };
             };
 
+            this.landed = (config, state, result) =>
+            {
+                state.response = result;
+                state.loading = false;
+
+                if(result.code < 200 || result.code >= 300)
+                {
+                    state.error = result.message;
+                    config.onError && config.onError(state);
+
+                    return;
+                }
+
+                state.error = null;
+                config.onSuccess && config.onSuccess(state);
+            };
+
+            this.failed = (config, state, error) =>
+            {
+                state.response = null;
+                state.error = error.message;
+                state.loading = false;
+
+                config.onError && config.onError(state);
+            };
+
+            this.call = (config) =>
+            {
+                return config.api
+                    ? commands.run.api(config.command, config.data)
+                    : commands.run(config.command, config.data);
+            };
+
+            this.settle = (config, state) =>
+            {
+                compile.data[config.bind] = state;
+                compile.data.Update();
+            };
+
             this.run = async (config) =>
             {
                 const state = {
@@ -69,39 +108,15 @@ onetype.AddonReady('directives', function(directives)
 
                 try
                 {
-                    const result = config.api
-                        ? await commands.run.api(config.command, config.data)
-                        : await commands.run(config.command, config.data);
-
-                    if(result.code < 200 || result.code >= 300)
-                    {
-                        state.response = result;
-                        state.error    = result.message;
-                        state.loading  = false;
-
-                        config.onError && config.onError(state);
-
-                        return;
-                    }
-
-                    state.response = result;
-                    state.error    = null;
-                    state.loading  = false;
-
-                    config.onSuccess && config.onSuccess(state);
+                    this.landed(config, state, await this.call(config));
                 }
                 catch(error)
                 {
-                    state.response = null;
-                    state.error    = error.message;
-                    state.loading  = false;
-
-                    config.onError && config.onError(state);
+                    this.failed(config, state, error);
                 }
                 finally
                 {
-                    compile.data[config.bind] = state;
-                    compile.data.Update();
+                    this.settle(config, state);
                 }
             };
 

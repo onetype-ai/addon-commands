@@ -5,37 +5,41 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
     const { direct = false, onChunk = null } = options;
     const startTime = performance.now();
 
+    this.envelope = (data, message, code, end) => ({
+        data,
+        message,
+        code,
+        time: (performance.now() - startTime).toFixed(2),
+        end
+    });
+
+    this.emit = (result) =>
+    {
+        onetype.emitters.fire('commands.run', {
+            id: item.Get('id'),
+            input: properties,
+            data: result.data,
+            message: result.message,
+            code: result.code,
+            time: result.time,
+            context,
+            direct
+        });
+    };
+
     return new Promise(async (resolve, reject) =>
     {
-        const emit = (result) =>
-        {
-            onetype.emitters.fire('commands.run', {
-                id: item.Get('id'),
-                input: properties,
-                data: result.data,
-                message: result.message,
-                code: result.code,
-                time: result.time,
-                context,
-                direct
-            });
-        };
+        let settled = false;
 
-        const finish = (message, code, data = null) =>
+        this.finish = (message, code, data = null) =>
         {
-            const result = {
-                data,
-                message,
-                code,
-                time: (performance.now() - startTime).toFixed(2),
-                end: true
-            };
+            const result = this.envelope(data, message, code, true);
 
-            emit(result);
+            this.emit(result);
             resolve(result);
         };
 
-        const parse = () =>
+        this.parse = () =>
         {
             try
             {
@@ -45,13 +49,13 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
             }
             catch(error)
             {
-                finish('Command ' + item.Get('id') + ' invalid input: ' + error.message, 400, error.message);
+                this.finish('Command ' + item.Get('id') + ' invalid input: ' + error.message, 400, error.message);
 
                 return false;
             }
         };
 
-        const allow = async () =>
+        this.allow = async () =>
         {
             if(direct || !item.Get('condition'))
             {
@@ -62,7 +66,7 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
 
             if(typeof allowed === 'string')
             {
-                finish(allowed, 403);
+                this.finish(allowed, 403);
 
                 return false;
             }
@@ -70,9 +74,22 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
             return true;
         };
 
-        let settled = false;
+        this.deliver = (result) =>
+        {
+            if(onChunk && !result.end)
+            {
+                onChunk(result);
+            }
 
-        const callback = (data, message = "Command '{{command}}' executed successfully.", code = 200, end = true) =>
+            if(result.end)
+            {
+                settled = true;
+                this.emit(result);
+                resolve(result);
+            }
+        };
+
+        this.callback = (data, message = "Command '{{command}}' executed successfully.", code = 200, end = true) =>
         {
             if(settled)
             {
@@ -89,30 +106,12 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
                 data = item.Fn('shape', data);
             }
 
-            const result = {
-                data,
-                message: message?.replace('{{command}}', item.Get('id')),
-                code,
-                time: (performance.now() - startTime).toFixed(2),
-                end
-            };
-
-            if(onChunk && !result.end)
-            {
-                onChunk(result);
-            }
-
-            if(result.end)
-            {
-                settled = true;
-                emit(result);
-                resolve(result);
-            }
+            this.deliver(this.envelope(data, message?.replace('{{command}}', item.Get('id')), code, end));
         };
 
-        try
+        this.execute = async () =>
         {
-            if(!parse())
+            if(!this.parse())
             {
                 return;
             }
@@ -125,26 +124,25 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
 
             if(middleware.value.cancel)
             {
-                return finish('Command ' + item.Get('id') + ' was cancelled.', 409);
+                return this.finish('Command ' + item.Get('id') + ' was cancelled.', 409);
             }
 
-            if(!await allow())
+            if(!await this.allow())
             {
                 return;
             }
 
-            await item.Get('callback').call(context, properties, callback, direct);
+            await item.Get('callback').call(context, properties, this.callback, direct);
+        };
+
+        try
+        {
+            await this.execute();
         }
         catch(error)
         {
-            emit({
-                data: null,
-                message: error.message || String(error),
-                code: typeof error.code === 'number' ? error.code : 500,
-                time: (performance.now() - startTime).toFixed(2)
-            });
-
+            this.emit(this.envelope(null, error.message || String(error), typeof error.code === 'number' ? error.code : 500, true));
             reject(error);
         }
-    })
+    });
 });

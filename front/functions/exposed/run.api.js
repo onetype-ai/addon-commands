@@ -1,27 +1,35 @@
 commands.FnExpose('run.api', async function(id, data = {})
 {
-    try
+    this.request = () =>
     {
-        const response = await fetch('/api/commands/run', {
+        return fetch('/api/commands/run', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ id, data })
         });
+    };
 
-        const result = await response.json();
-
-        if(result.code !== 200)
+    this.unwrap = (result) =>
+    {
+        if(result.code === 200)
         {
-            return {
-                data: null,
-                message: result.message,
-                code: result.code
-            };
+            return result.data;
         }
 
-        return result.data;
+        return {
+            data: null,
+            message: result.message,
+            code: result.code
+        };
+    };
+
+    try
+    {
+        const response = await this.request();
+
+        return this.unwrap(await response.json());
     }
     catch(error)
     {
