@@ -43,11 +43,6 @@ onetype.AddonReady('directives', function(directives)
         },
         code: function(data, compile, node)
         {
-            if(node.tagName.toLowerCase() !== 'ot-command')
-            {
-                return;
-            }
-
             this.config = () =>
             {
                 return {
@@ -120,6 +115,11 @@ onetype.AddonReady('directives', function(directives)
                     this.settle(config, state);
                 }
             };
+
+            if(node.tagName.toLowerCase() !== 'ot-command')
+            {
+                return;
+            }
 
             const bind = data['bind'].value;
 

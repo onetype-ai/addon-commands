@@ -39,7 +39,7 @@ onetype.AddonReady('commands', (commands) =>
         },
         callback: async function(properties, resolve)
         {
-            const forward = async () =>
+            this.forward = async () =>
             {
                 const command = commands.ItemGet(properties.id);
 
@@ -64,7 +64,7 @@ onetype.AddonReady('commands', (commands) =>
 
             try
             {
-                await forward();
+                await this.forward();
             }
             catch(error)
             {
