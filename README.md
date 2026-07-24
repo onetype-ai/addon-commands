@@ -1,14 +1,14 @@
 # Commands
 
-Commands is the OneType addon that turns a named callback into a typed, documented, runnable action. A command has an id, an input schema, an output schema and a callback. Everything else (HTTP exposure, gRPC streaming, telemetry, permission guards) hangs off that one registration. The addon has zero dependencies; transports depend on it, never the other way around.
+Commands turns a named callback into a typed, documented, runnable action. A command has an id, an input schema, an output schema and a callback. Register it once and you can run it locally, over HTTP, from the browser, from markup, or from another command. The addon has zero dependencies; transports depend on it, never the other way around.
 
 - Package: `@onetype/addon-commands`, slug `onetype/addon/commands`
-- Depends on: nothing. Supports: `onetype/addon/canon` (pattern and placement items that activate when canon is present) and `onetype/addon/directives` (the `ot-command` directive registers when directives are present)
-- Sides: `back/` (Node) and `front/` (browser, shipped as an asset bundle registered in `back/items/onetype/assets/commands.js`)
+- Depends on: nothing. Supports: `onetype/addon/canon` and `onetype/addon/directives`
+- Sides: `back/` (Node) and `front/` (browser)
 
-## Registering a command
+## Define a command
 
-A command is one item in one file under `items/commands/` of the owning addon, wrapped in `AddonReady`:
+One item, one file, under `items/commands/` of the owning addon:
 
 ```js
 onetype.AddonReady('commands', (commands) =>
@@ -34,51 +34,153 @@ onetype.AddonReady('commands', (commands) =>
 });
 ```
 
-Fields, in canon order: `id` (addon then action with colons, like `vault:set`), `addon` (owner), `description`, `exposed` (answers over HTTP when true), `method` (GET/POST/PUT/DELETE), `endpoint` (HTTP path, supports `:param` segments), `type` (JSON/HTML/CSS/JS response type), `metadata` (free json tags), `silent` (composite commands mark themselves so telemetry logs them once), `in` (input schema or schema name), `out` (output schema or schema name), `condition` (guard), `callback` (the body). `in`, `out` and `condition` are left out when empty.
+Field reference, in canon order:
 
-## The run lifecycle
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `id` | string | Addon then action with colons, like `vault:set` or `work:tasks:create`. |
+| `addon` | string | The owning addon. |
+| `description` | string | What the command does, one sentence. |
+| `exposed` | boolean | Answers over HTTP when true. Unexposed commands are invisible to transports and discovery. |
+| `method` | string | GET, POST, PUT or DELETE. |
+| `endpoint` | string | HTTP path. Supports `:param` segments, like `/api/posts/:id`. |
+| `type` | string | Response type: JSON, HTML, CSS or JS. |
+| `metadata` | json | Free tags. |
+| `silent` | boolean | Composite commands mark themselves so telemetry logs them once. |
+| `in` | object or string | Input schema, inline defines or a registered schema name. Leave out when the command takes nothing. |
+| `out` | object or string | Output schema. Leave out when the shape is free. |
+| `condition` | function | Guard, see below. Leave out when open. |
+| `callback` | function | The body: `async function(properties, resolve)`. |
 
-`item.run` (back: `back/item/functions/run.js`, front: `front/item/functions/run.js`) drives every execution:
+## Run a command
 
-1. **Input validation.** `properties` are sealed against the `in` schema: missing required fields or unknown keys resolve `400` without reaching the callback. A command with no `in` receives an empty object, whatever was passed.
-2. **Middleware.** The `commands.run` middleware chain runs with `{ id, properties, cancel }`. An intercept that sets `cancel: true` resolves `409` and the callback never runs.
-3. **Condition.** When the command has a `condition` and the run is not direct, the guard is called with the run context as `this`. Returning a string blocks the run: that string becomes the message of a `403` result.
-4. **Callback.** Called as `callback.call(context, properties, resolve, direct)`. The context carries transport state (an HTTP run carries `this.http` with request, response and state).
-5. **Output validation.** On a 2xx resolve with an `out` schema, the data is sealed against it. Data that violates the contract raises a `500` `OUT error`. The run rejects loudly, nothing is silently dropped.
-6. **Emit.** Every run, success or failure, fires the `commands.run` emitter with `{ id, input, data, message, code, time, context, direct }`.
+```js
+const result = await commands.run('posts:publish', { id: 'abc' });
 
-The resolve signature is `resolve(data, message, code, end)`. Every result is an envelope: `{ data, message, code, time, end }`, with `time` in milliseconds as a string. A run settles once: after the first ending resolve, every later resolve and chunk is inert, and the emitter fires exactly once. Output shaping lives in `item.shape`, the lifecycle calls it for every 2xx resolve.
+result.data;      // what the callback resolved, shaped by the out schema
+result.message;   // human readable outcome
+result.code;      // 200, or the code the callback chose
+result.time;      // execution milliseconds as a string
+```
 
-Back `item.run` signature: `Fn('run', properties, context, options)` where `options` is `{ direct, onChunk }`. Front is the same minus `direct`. `direct: true` marks a trusted internal call and skips the condition.
+Every run returns the same envelope: `{ data, message, code, time, end }`. `commands.run` exists on both sides. An unknown id throws a `404` OneType error; everything else resolves the envelope, including failures:
 
-## Streaming
+| Code | When |
+| --- | --- |
+| 200 | The callback resolved. |
+| 400 | Input failed validation: missing required field or an unknown key. The callback never ran. |
+| 403 | The condition returned a string; that string is the message. |
+| 409 | A middleware intercept cancelled the run. |
+| 500 | Resolved data broke the out contract, or the callback threw. A throw rejects the promise. |
 
-A callback may resolve many times: `resolve(chunk, message, 200, false)` emits a chunk, the final `resolve(data, message, code, true)` ends the run. Chunks flow to `options.onChunk`; only the ending resolve settles the promise and fires the emitter. Over HTTP a client opts in with a `streaming` input flag and receives newline-delimited formatted chunks.
+`resolve(data, message, code)` inside a callback picks all three; message defaults to a success sentence, code to 200.
 
-## Exposed functions
+## Validation is the contract
 
-- `commands.run(id, data)`, back and front. Looks the command up and runs it; throws a `404` OneType error when the id does not exist. Registered as `exposed.run` from `functions/exposed/run.js`.
-- `commands.find(method, pathname)`, back only. Resolves an HTTP method and pathname to a command item: exact endpoint match first, then `:param` endpoints segment by segment, then the `/*` catch-all. Pathname matching is case insensitive.
-- `commands.run.api(id, data)`, front only. Runs the command on the server by POSTing `{ id, data }` to `/api/commands/run` and returns the inner envelope. Use it when the command only exists on the back or must run with server authority.
+- Input is sealed against `in`: unknown keys resolve `400`, missing `required` fields resolve `400`, absent optional fields take the `value` of their define. Defaults live in the schema, never in the callback.
+- Output is sealed against `out` on every 2xx resolve: a field the schema does not name raises a loud `500 OUT error` and rejects the run. Nothing is silently dropped.
+- A command with no `in` receives `{}` no matter what was passed.
 
-## Built-in commands
+## Guard a command
 
-- `commands:run` on `POST /api/commands/run`, silent. Composite runner: takes `{ id, data }`, refuses unknown (`404`) and unexposed (`403`) ids, forwards the caller context, returns the inner envelope.
-- `commands:get:many` on `GET /api/commands`, silent. Lists every exposed command with id, description, method, endpoint, type and both schemas: the machine-readable API catalog.
-- `commands:get:one` on `GET /api/commands/:id`, silent. Describes one exposed command; `403` for unexposed, `404` for unknown.
+```js
+condition: function()
+{
+    return this.user ? undefined : 'Login first.';
+}
+```
 
-## Registry surface
+The guard runs with the caller context as `this` (an HTTP run carries `this.http` with request, response and state). Returning a string blocks the run with `403` and that message. Trusted internal calls skip the guard: `item.Fn('run', properties, context, { direct: true })`.
 
-- Schema `command` (`items/onetype/schemas/command.js`, both sides) is the shape of a described command, used by `get:one`/`get:many` outputs.
-- Emitter `commands.run` (`items/onetype/emitters/commands.run.js`) fires after every execution. The `context` field is passed by reference: read it during the emit, never hold or serialize it.
-- Middleware `commands.run` (`items/onetype/middlewares/commands.run.js`) runs before every callback, after input validation; intercepts may inspect properties and cancel.
+## Stream a run
 
-## Front directive
+A callback may resolve many times. `end: false` emits a chunk, the final resolve settles:
 
-`<ot-command command="posts:many" bind="posts">` (`front/items/directives/ot.command.js`) runs a command on render and binds `{ response, error, loading }` to the compile data under `bind`. A bind key that already holds a value skips the run. Every non 2xx envelope lands in `error` and calls `_error`; only a 2xx calls `_success`. Attributes: `command` (required), `bind` (default `command`), `data`, `api` (boolean, routes through `commands.run.api`), `_success`/`_error` callbacks.
+```js
+callback: async function(properties, resolve)
+{
+    for(const step of steps)
+    {
+        resolve({ step }, 'working', 200, false);
+    }
+
+    resolve({ done: true }, 'finished', 200, true);
+}
+```
+
+Consume chunks with `item.Fn('run', properties, context, { onChunk: (chunk) => ... })`. A run settles once: after the first ending resolve every later resolve and chunk is inert, and the `commands.run` emitter fires exactly once. Over HTTP a client passes a `streaming` input flag and receives newline delimited chunks.
+
+## Observe and intercept every run
+
+```js
+onetype.emitters.catch('commands.run', (run) =>
+{
+    // run: { id, input, data, message, code, time, context, direct } after every run, success or failure
+});
+
+onetype.middlewares.intercept('commands.run', async (chain) =>
+{
+    if(chain.value.id === 'posts:publish')
+    {
+        chain.value.cancel = true;   // resolves 409, the callback never runs
+    }
+
+    await chain.next();
+});
+```
+
+The middleware sees `{ id, properties, cancel }` after input validation, before the callback. The emitter context is passed by reference: read during the emit, never hold or serialize it.
+
+## Call over HTTP
+
+Everything exposed self describes:
+
+| Endpoint | Command | Returns |
+| --- | --- | --- |
+| `GET /api/commands` | `commands:get:many` | Every exposed command with id, description, method, endpoint, type and both schemas. The machine readable catalog. |
+| `GET /api/commands/:id` | `commands:get:one` | One described command. `403` unexposed, `404` unknown. |
+| `POST /api/commands/run` | `commands:run` | Runs `{ id, data }` and returns the inner envelope. Refuses unknown (`404`) and unexposed (`403`) ids. |
+
+A command with its own `endpoint` also answers there directly; `:param` segments bind into the input by name.
+
+`commands.find(method, pathname)` (back) resolves a method and path to a command item: exact endpoint first, then `:param` endpoints segment by segment, then the `/*` catch all. Matching is case insensitive.
+
+## From the browser
+
+```js
+await commands.run('posts:publish', { id });        // runs in the browser registry
+await commands.run.api('posts:publish', { id });    // POSTs to /api/commands/run, runs on the server
+```
+
+Use `run.api` when the command only exists on the back or must run with server authority. It returns the inner envelope; a transport failure returns `{ data: null, message, code: 500 }`.
+
+In markup, the `ot-command` directive runs a command on render and binds its state:
+
+```html
+<ot-command command="posts:many" bind="posts" :data="{ page: 1 }" api="true"></ot-command>
+<div ot-if="posts.loading">Loading...</div>
+<div ot-for="post in posts.response.data"></div>
+```
+
+The bound state is `{ response, error, loading }`. A bind key that already holds a value skips the run. Every non 2xx envelope lands in `error` and calls `_error`; only a 2xx calls `_success`. Attributes: `command` (required), `bind` (defaults to `command`), `data`, `api`, `_success`, `_error`.
+
+## Compose commands
+
+Run a command from a command and forward the caller context so guards keep working:
+
+```js
+callback: async function(properties, resolve)
+{
+    const result = await commands.ItemGet('posts:render').Fn('run', properties, this);
+
+    resolve(result.data, result.message, result.code);
+}
+```
+
+Mark the outer command `silent: true` so telemetry logs the pair once.
 
 ## Guarantees
 
-- No silent failures: unknown function names throw, out-of-contract data raises `OUT error`, unknown input keys resolve `400`.
-- Every result is the same envelope shape; every run is observable through the `commands.run` emitter and cancellable through the middleware.
-- Everything exposed is self-describing: `GET /api/commands` is generated from the same registrations that execute.
+- No silent failures: unknown ids throw, out of contract data raises `OUT error`, unknown input keys resolve `400`.
+- Every result is the same envelope shape; every run is observable through the emitter and cancellable through the middleware.
+- Everything exposed is self describing: `GET /api/commands` is generated from the same registrations that execute.
