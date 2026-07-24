@@ -81,8 +81,15 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
             }
         };
 
+        let settled = false;
+
         const callback = (data, message = "Command '{{command}}' executed successfully.", code = 200, end = true) =>
         {
+            if(settled)
+            {
+                return;
+            }
+
             if(message === null && code === 404)
             {
                 message = 'The requested resource cannot be found.';
@@ -108,6 +115,7 @@ commands.Fn('item.run', function(item, properties = {}, context = {}, options = 
 
             if(result.end)
             {
+                settled = true;
                 emit(result);
                 resolve(result);
             }
