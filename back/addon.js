@@ -2,6 +2,8 @@
 
 const commands = onetype.Addon('commands', (addon) =>
 {
+    addon.Description('The registry of everything the application can be asked to do, each command typed on the way in and out.');
+
     addon.Field('id', {
         type: 'string',
         required: true,

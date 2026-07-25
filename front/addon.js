@@ -2,6 +2,8 @@
 
 const commands = onetype.Addon('commands', (addon) =>
 {
+    addon.Description('Runs a command in the browser or hands it to the server, answering the same envelope either way.');
+
     addon.Field('id', {
         type: 'string',
         required: true,
