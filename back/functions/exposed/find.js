@@ -32,4 +32,4 @@ commands.FnExpose('find', function(method, pathname)
     return this.exact(items, target)
         || this.params(items, target)
         || Object.values(this.Items()).find((item) => item.Get('endpoint') === '/*');
-});
+}, 'Answers the command a method and a path resolve to, exact before parameterised.');

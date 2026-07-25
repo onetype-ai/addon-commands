@@ -12,4 +12,4 @@ commands.FnExpose('run', async function(id, data = {})
     }
 
     return await command.Fn('run', data);
-});
+}, 'Runs a registered command and answers the envelope it resolved with.');

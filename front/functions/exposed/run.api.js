@@ -41,4 +41,4 @@ commands.FnExpose('run.api', async function(id, data = {})
             code: 500
         };
     }
-});
+}, 'Hands a command to the server and answers its data, or the envelope where it refused.');

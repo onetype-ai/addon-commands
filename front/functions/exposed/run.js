@@ -10,4 +10,4 @@ commands.FnExpose('run', async function(id, data = {})
     }
 
     return await command.Fn('run', data);
-});
+}, 'Runs a command registered in the browser and answers the envelope it resolved with.');
