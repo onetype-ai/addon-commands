@@ -157,12 +157,14 @@ Use `run.api` when the command only exists on the back or must run with server a
 In markup, the `ot-command` directive runs a command on render and binds its state:
 
 ```html
-<ot-command use="posts:many" bind="posts" :data="{ page: 1 }" api="true"></ot-command>
+<ot-command use="posts:many" bind="posts" :data="{ page: 1 }" :api="true"></ot-command>
 <div ot-if="posts.loading">Loading...</div>
 <div ot-for="post in posts.response.data"></div>
 ```
 
 The bound state is `{ response, error, loading }`. A bind key that already holds a value skips the run. Every non 2xx envelope lands in `error` and calls `_error`; only a 2xx calls `_success`. Attributes: `use` (required, the command id), `bind` (defaults to `command`), `data`, `api`, `_success`, `_error`.
+
+`api` is a boolean, so it takes the binding colon. A plain `api="true"` hands the string to a boolean define, which reads it as false and runs the command in the browser registry instead of on the server. Every non string attribute is the same: the colon is what carries a type across.
 
 ## Compose commands
 
@@ -178,6 +180,19 @@ callback: async function(properties, resolve)
 ```
 
 Mark the outer command `silent: true` so telemetry logs the pair once.
+
+## What the tests hold it to
+
+With `@onetype/addon-tests` present, four tests register under `back/items/tests/`:
+
+| Test | Holds |
+| --- | --- |
+| `back/runs` | A run answers one envelope with data, message, code and time; bad input answers 400 and an unknown id throws. |
+| `back/routes` | An exact endpoint wins, a `:parameter` stands in, the method tells two apart, and a guard that speaks answers 403. |
+| `front/reaches` | The addon reaches the browser carrying `run`, `run.api` and the `ot-command` tag, and a command registered there runs there. |
+| `front/calls` | `run.api` posts the id and the data to the one endpoint, unwrapping the data on success and the envelope on anything else. |
+
+Run them with `tests.run('commands')`.
 
 ## Guarantees
 

@@ -2,6 +2,7 @@
 
 import commands from '#commands/back/addon.js';
 
+import '#commands/back/items/onetype/assets/commands.js';
 import '#commands/back/items/onetype/schemas/command.js';
 import '#commands/back/items/onetype/emitters/commands.run.js';
 import '#commands/back/items/onetype/middlewares/commands.run.js';
@@ -17,5 +18,11 @@ import '#commands/back/items/canon/patterns/items.js';
 import '#commands/back/items/commands/run.js';
 import '#commands/back/items/commands/get.one.js';
 import '#commands/back/items/commands/get.many.js';
+
+import '#commands/back/items/tests/back/routes.js';
+import '#commands/back/items/tests/back/runs.js';
+import '#commands/back/items/tests/front/binds.js';
+import '#commands/back/items/tests/front/calls.js';
+import '#commands/back/items/tests/front/reaches.js';
 
 export default commands;

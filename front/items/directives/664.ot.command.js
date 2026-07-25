@@ -91,7 +91,7 @@ onetype.AddonReady('directives', function(directives)
             this.settle = (config, state) =>
             {
                 compile.data[config.bind] = state;
-                compile.data.Update();
+                compile.render.Update();
             };
 
             this.run = async (config) =>
